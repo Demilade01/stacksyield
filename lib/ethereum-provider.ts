@@ -39,7 +39,7 @@ export const connectEthereumWallet = async (): Promise<string> => {
     }
 
     const accounts = await provider.send('eth_requestAccounts', []);
-    
+
     if (accounts.length === 0) {
       throw new Error('No accounts found');
     }
@@ -114,7 +114,7 @@ export const getUSDCBalance = async (address: string): Promise<string> => {
 
     const balance = await usdcContract.balanceOf(address);
     const decimals = await usdcContract.decimals();
-    
+
     return ethers.formatUnits(balance, decimals);
   } catch (error) {
     console.error('Error getting USDC balance:', error);
