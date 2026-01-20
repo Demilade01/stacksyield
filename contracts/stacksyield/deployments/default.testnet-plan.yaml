@@ -1,0 +1,18 @@
+---
+id: 0
+name: Testnet deployment
+network: testnet
+stacks-node: "https://api.testnet.hiro.so"
+bitcoin-node: "http://blockstack:blockstacksystem@bitcoind.testnet.stacks.co:18332"
+plan:
+  batches:
+    - id: 0
+      transactions:
+        - contract-publish:
+            contract-name: yield-vault
+            expected-sender: STQDDKSXAKZ395QT0FGSJ74P9RB29V8YXB50KXKR
+            cost: 48230
+            path: "contracts\\yield-vault.clar"
+            anchor-block-only: true
+            clarity-version: 2
+      epoch: "2.5"
