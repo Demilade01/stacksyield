@@ -1,4 +1,6 @@
 // Zustand store for wallet state management
+'use client';
+
 import { create } from 'zustand';
 import { WalletState } from '../types';
 import { connectEthereumWallet, disconnectEthereumWallet, getUSDCBalance } from '../ethereum-provider';
@@ -17,7 +19,7 @@ interface WalletStore extends WalletState {
   updateBalances: () => Promise<void>;
   setEthereumBalance: (balance: string) => void;
   setStacksBalance: (balance: string) => void;
-  checkConnections: () => void;
+  checkConnections: () => Promise<void>;
 }
 
 export const useWalletStore = create<WalletStore>((set, get) => ({
@@ -85,8 +87,8 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     }
   },
 
-  disconnectStacks: () => {
-    disconnectStacksWallet();
+  disconnectStacks: async () => {
+    await disconnectStacksWallet();
     set({
       stacks: {
         address: null,
@@ -96,12 +98,12 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
     });
   },
 
-  checkConnections: () => {
+  checkConnections: async () => {
     // Check if Stacks is still connected on page load
-    const isStacksConnected = checkStacksConnection();
+    const isStacksConnected = await checkStacksConnection();
 
     if (isStacksConnected) {
-      const address = getStacksAddress();
+      const address = await getStacksAddress();
       if (address) {
         set((state) => ({
           stacks: {

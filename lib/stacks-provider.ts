@@ -1,6 +1,22 @@
 // Stacks blockchain provider utilities - Using modern @stacks/connect API
-import { connect, disconnect, isConnected, getLocalStorage } from '@stacks/connect';
+'use client';
+
 import { config } from './config';
+
+// Lazy imports to avoid SSR issues
+let connectModule: any = null;
+
+const getConnectModule = async () => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  if (!connectModule) {
+    connectModule = await import('@stacks/connect');
+  }
+
+  return connectModule;
+};
 
 export const getStacksNetwork = () => {
   // Return network string for API calls
@@ -8,8 +24,17 @@ export const getStacksNetwork = () => {
 };
 
 export const connectStacksWallet = async (): Promise<string> => {
+  if (typeof window === 'undefined') {
+    throw new Error('Wallet connection only available in browser');
+  }
+
   try {
-    // Use the modern connect() API instead of showConnect()
+    const module = await getConnectModule();
+    if (!module) {
+      throw new Error('Connect module not available');
+    }
+
+    const { connect } = module;
     const response = await connect();
 
     // Access addresses array (type assertion for the response structure)
@@ -27,24 +52,50 @@ export const connectStacksWallet = async (): Promise<string> => {
   }
 };
 
-export const disconnectStacksWallet = () => {
-  disconnect();
+export const disconnectStacksWallet = async () => {
+  if (typeof window === 'undefined') return;
+
+  const module = await getConnectModule();
+  if (module) {
+    module.disconnect();
+  }
 };
 
-export const getStacksAddress = (): string | null => {
-  if (!isConnected()) {
+export const getStacksAddress = async (): Promise<string | null> => {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const module = await getConnectModule();
+    if (!module) return null;
+
+    const { isConnected, getLocalStorage } = module;
+
+    if (!isConnected()) {
+      return null;
+    }
+
+    const userData = getLocalStorage();
+    const addresses = (userData as any)?.addresses;
+    if (addresses?.stx && addresses.stx.length > 0) {
+      return addresses.stx[0].address;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error getting Stacks address:', error);
     return null;
   }
-
-  const userData = getLocalStorage();
-  const addresses = (userData as any)?.addresses;
-  if (addresses?.stx && addresses.stx.length > 0) {
-    return addresses.stx[0].address;
-  }
-
-  return null;
 };
 
-export const checkStacksConnection = (): boolean => {
-  return isConnected();
+export const checkStacksConnection = async (): Promise<boolean> => {
+  if (typeof window === 'undefined') return false;
+
+  try {
+    const module = await getConnectModule();
+    if (!module) return false;
+
+    return module.isConnected();
+  } catch (error) {
+    return false;
+  }
 };
